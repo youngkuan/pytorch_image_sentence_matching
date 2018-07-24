@@ -8,6 +8,7 @@ image sentence matching with generative adversarial networks
 > 图像的加载，图像大小为`3*m*n`;
 - load captions
 > 图像的caption是保存在json文件中;
+>
 - 方法
 > 1. 下载数据集，包括图像和文本注释
 > 2. 安装cocoapi
@@ -21,3 +22,5 @@ image sentence matching with generative adversarial networks
 ## 问题记录
 1. **error [xx.zip]: start of central directory not found;**
 > 在linux下，zip命令只能解压4G以下的zip文件；安装7zip软件，解压。
+2.flickr8k数据集错误数据
+> flickr8k数据集中，Flickr8k.token.txt中存在几个特例（6731-6735行），图片名错误（2258277193_586949ec62.jpg.1）
