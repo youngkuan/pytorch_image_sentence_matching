@@ -1,4 +1,4 @@
-from dataset import load_dataset
+from main import load_dataset
 
 
 def main():
