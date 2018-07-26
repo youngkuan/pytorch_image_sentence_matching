@@ -1,4 +1,3 @@
-import io
 from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
@@ -6,7 +5,7 @@ import torch
 import h5py
 import random
 import os
-import config
+
 
 class Text2ImageDataset(Dataset):
 
@@ -49,8 +48,10 @@ class Text2ImageDataset(Dataset):
         sentence_embedding = self.sentence_embeddings[idx]
         right_image = self.find_right_image(idx)
         right_image = np.array(right_image, dtype=float)
+        right_image = right_image.transpose(2, 0, 1)
         wrong_image = self.find_wrong_image(idx)
         wrong_image = np.array(wrong_image, dtype=float)
+        wrong_image = wrong_image.transpose(2, 0, 1)
 
         right_image = self.validate_image(right_image)
         wrong_image = self.validate_image(wrong_image)
@@ -61,6 +62,9 @@ class Text2ImageDataset(Dataset):
             # sample a wrong image from images
             'wrong_image': torch.FloatTensor(wrong_image),
         }
+
+        sample['right_image'] = sample['right_image'].sub_(127.5).div_(127.5)
+        sample['wrong_image'] = sample['wrong_image'].sub_(127.5).div_(127.5)
 
         return sample
 
@@ -97,8 +101,7 @@ class Text2ImageDataset(Dataset):
 
     def find_flickr8k_image(self, image_id):
         image_path = os.path.join(self.image_dir, image_id)
-        image = Image.open(image_path).resize((64, 64))
-        image.save('tmp.jpg', 'jpeg')
+        image = Image.open(image_path).resize((128, 128))
         return image
 
 
