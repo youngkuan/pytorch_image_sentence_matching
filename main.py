@@ -10,7 +10,7 @@ if __name__ == '__main__':
     data_path = "../data/flickr8k/"
     sentence_embedding_file = os.path.join(data_path, "flickr8k_hglmm_30_ica_sent_vecs_pca_6000.mat")
     image_ids_file = os.path.join(data_path, "flickr8k_image_ids.mat")
-    image_dir = os.path.join(data_path,"images")
+    image_dir = os.path.join(data_path, "images")
 
     trainer = Trainer(sentence_embedding_file, image_ids_file, image_dir)
     trainer.train()

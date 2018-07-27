@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from utils import Utils
 
 class Generator(nn.Module):
 	def __init__(self):
@@ -92,8 +93,14 @@ class Discriminator(nn.Module):
 			# state size. (ndf*16) x 4 x 4
 		)
 
-		self.projector = nn.Sequential(
+		self.sentence_projector = nn.Sequential(
 			nn.Linear(in_features=self.sentence_embed_dim, out_features=self.projected_sentence_embed_dim),
+			nn.BatchNorm1d(num_features=self.projected_sentence_embed_dim),
+			nn.LeakyReLU(negative_slope=0.2, inplace=True)
+		)
+
+		self.image_projector = nn.Sequential(
+			nn.Linear(in_features=(self.ndf*16)*4*4, out_features=self.projected_sentence_embed_dim),
 			nn.BatchNorm1d(num_features=self.projected_sentence_embed_dim),
 			nn.LeakyReLU(negative_slope=0.2, inplace=True)
 		)
@@ -104,19 +111,35 @@ class Discriminator(nn.Module):
 			# (1) x 1 x 1
 			nn.Sigmoid()
 			)
-
-	def forward(self, image, sentence_embed):
+	'''
+		def forward_gan(self, image, sentence_embed):
 		# batch_size x (num_channels) x image_size x image_size -> batch_size x (ndf*16) x 4 x 4
 		image_feature = self.netD_1(image)
 
 		# batch_size x embed_sentence_dim -> batch_size x projected_embed_sentence_dim
 		sentence_projected_embed = self.projector(sentence_embed)
-
 		sentence_projected_embed = sentence_projected_embed.repeat(4, 4, 1, 1).permute(2, 3, 0, 1)
+
 		# batch_size x projected_embed_sentence_dim x (4 x 4) ; batch_size x (ndf*16) x 4 x 4
 		hidden_concat = torch.cat([image_feature, sentence_projected_embed], 1)
 		# batch_size x ((ndf*16)+projected_embed_sentence_dim) x (4 x 4)
 		x = self.netD_2(hidden_concat)
 		# batch_size x 1 x 1 x 1 -> batch_size x 1
-		return x.view(-1, 1).squeeze(1)
 
+		return x.view(-1, 1).squeeze(1)
+	'''
+
+	def forward(self, image, sentence_embed):
+		# batch_size x (num_channels) x image_size x image_size -> batch_size x (ndf*16) x 4 x 4
+		image_feature = self.netD_1(image)
+		image_feature = image_feature.view(-1, (self.ndf * 16) * 4 * 4)
+		image_projected_feature = self.image_projector(image_feature)
+
+		# batch_size x embed_sentence_dim -> batch_size x projected_embed_sentence_dim
+		sentence_projected_embed = self.sentence_projector(sentence_embed)
+
+		# batch_size x sentence_projected_embed
+		# similarities = Utils.cosine_similarity(image_projected_feature, sentence_projected_embed)
+
+		# return similarities
+		return [image_projected_feature, sentence_projected_embed]
