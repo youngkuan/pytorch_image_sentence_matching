@@ -4,12 +4,15 @@ from text_image_dataset import Text2ImageDataset
 from cgan import Generator, Discriminator
 from torch.utils.data import DataLoader
 from loss import PairwiseRankingLoss
+from utils import Utils
+from evaluate import evaluate_model
 
 
 class Trainer(object):
     
     def __init__(self, sentence_embedding_file, image_ids_file, image_dir, dataset_type="flickr8k"
-                 , epochs=15, batch_size=128, margin=0.2, lr=0.01, model_save_path="./model", num_workers=0):
+                 , epochs=15, batch_size=128, margin=0.2, lr=0.01, lambda1=1.0, lambda2=1.0
+                 , model_save_path="./model", num_workers=0):
 
         generator = Generator()
         discriminator = Discriminator()
@@ -19,6 +22,7 @@ class Trainer(object):
         self.num_epochs = epochs
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.dataset_type = dataset_type
         self.dataset = Text2ImageDataset(sentence_embedding_file, image_ids_file, image_dir, dataset_type)
 
         self.noise_dim = 500
@@ -26,8 +30,9 @@ class Trainer(object):
         self.beta1 = 0.5
 
         # hyper-parameter
-        self.lambda1 = 1
-        self.lambda2 = 1
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.margin = margin
 
         # data loader
         self.data_loader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True,
@@ -48,7 +53,7 @@ class Trainer(object):
         self.model_save_path = model_save_path
 
     def train(self):
-        self.train_image_text_gan()
+        return self.train_image_text_gan()
 
     def train_cgan(self):
         # train the generator and discriminator
@@ -107,7 +112,6 @@ class Trainer(object):
 
     def train_image_text_gan(self):
         # train the generator and discriminator
-
         for epoch in range(self.num_epochs):
             iteration = 0
             for sample in self.data_loader:
@@ -161,3 +165,12 @@ class Trainer(object):
 
                 print("Epoch: %d, iteration: %d, generator_loss= %f, discriminator_loss= %f" %
                       (epoch, iteration, generator_loss.data, discriminator_loss.data))
+            (r1, r5, r10, medr) = evaluate_model(self.discriminator)
+            print "Epoch: %d, lr:%.1f, lambda1:%.1f, lambda2:%.1f, margin:%.1f ; Image to Text: %.1f, %.1f, %.1f, %.1f" \
+                  % (epoch, self.lr, self.lambda1, self.lambda2, self.margin, r1, r5, r10, medr)
+
+            # Utils.save_checkpoint(self.discriminator, self.generator
+            #                       , self.model_save_path, self.dataset_type, postfix)
+        return self.generator, self.discriminator
+
+

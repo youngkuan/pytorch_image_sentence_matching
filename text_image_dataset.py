@@ -21,7 +21,7 @@ class Text2ImageDataset(Dataset):
     def __len__(self):
         sentence_embeddings = h5py.File(self.sentence_embedding_file, 'r')
         # load the sentence embeddings ;size: n * 6000
-        self.sentence_embeddings = sentence_embeddings['vectors_']
+        self.sentence_embeddings = sentence_embeddings['train_vectors_']
         length = self.sentence_embeddings.shape[0]
         print(length)
         return length
@@ -30,12 +30,12 @@ class Text2ImageDataset(Dataset):
         if self.sentence_embeddings is None:
             sentence_embeddings = h5py.File(self.sentence_embedding_file, 'r')
             # load the sentence embeddings ;size: n * 6000
-            self.sentence_embeddings = np.asarray(sentence_embeddings['vectors_'])
+            self.sentence_embeddings = np.asarray(sentence_embeddings['train_vectors_'])
 
         if self.image_ids is None:
             image_ids = []
             image_ids_h5py = h5py.File(self.image_ids_file, 'r')
-            hdf5_objects = image_ids_h5py['image_ids']
+            hdf5_objects = image_ids_h5py['train_image_ids']
             length = hdf5_objects.shape[1]
             for i in range(length):
                 image_ids.append(''.join([chr(v[0]) for v in image_ids_h5py[hdf5_objects[0][i]].value]))
@@ -103,7 +103,6 @@ class Text2ImageDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_id)
         image = Image.open(image_path).resize((128, 128))
         return image
-
 
     def validate_image(self, img):
         # img = np.array(img, dtype=float)

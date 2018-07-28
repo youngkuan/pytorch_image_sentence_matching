@@ -1,8 +1,9 @@
-from torch import  autograd
 import torch
 import os
 import torch.nn.functional as F
-
+import h5py
+from PIL import Image
+import numpy as np
 
 class Utils(object):
 
@@ -10,30 +11,6 @@ class Utils(object):
     def smooth_label(tensor, offset):
         return tensor + offset
 
-    @staticmethod
-
-    # based on:  https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
-    def compute_GP(netD, real_data, real_embed, fake_data, LAMBDA):
-        BATCH_SIZE = real_data.size(0)
-        alpha = torch.rand(BATCH_SIZE, 1)
-        alpha = alpha.expand(BATCH_SIZE, int(real_data.nelement() / BATCH_SIZE)).contiguous().view(BATCH_SIZE, 3, 64, 64)
-        alpha = alpha.cuda()
-
-        interpolates = alpha * real_data + ((1 - alpha) * fake_data)
-
-        interpolates = interpolates.cuda()
-
-        interpolates = autograd.Variable(interpolates, requires_grad=True)
-
-        disc_interpolates, _ = netD(interpolates, real_embed)
-
-        gradients = autograd.grad(outputs=disc_interpolates, inputs=interpolates,
-                                  grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
-                                  create_graph=True, retain_graph=True, only_inputs=True)[0]
-
-        gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
-
-        return gradient_penalty
 
     @staticmethod
     def save_checkpoint(netD, netG, dir_path, subdir_path, epoch):
@@ -88,6 +65,49 @@ class Utils(object):
         p_w2 = F.pairwise_distance(w2, torch.zeros(w2.size()).cuda())
         p_w1_w2 = F.pairwise_distance(w1, w2)
         return p_w1_w2/(p_w1*p_w2)
+
+    @staticmethod
+    def save_checkpoint(netD, netG, dir_path, subdir_path, postfix):
+        path = os.path.join(dir_path, subdir_path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        torch.save(netD.state_dict(), '{0}/disc_{1}.pth'.format(path, postfix))
+        torch.save(netG.state_dict(), '{0}/gen_{1}.pth'.format(path, postfix))
+
+    @staticmethod
+    def load_data(image_ids_file, sentence_embedding_file, image_dir):
+        # load sentence
+        sentence_embeddings = h5py.File(sentence_embedding_file, 'r')
+        #
+        sentence_embeddings = np.asarray(sentence_embeddings['val_vectors_'])
+
+        # load image ids
+        # image ids (n * 1)
+        image_ids = []
+        image_ids_h5py = h5py.File(image_ids_file, 'r')
+        hdf5_objects = image_ids_h5py['val_image_ids']
+        length = hdf5_objects.shape[1]
+        for i in range(length):
+            image_ids.append(''.join([chr(v[0]) for v in image_ids_h5py[hdf5_objects[0][i]].value]))
+
+        images = []
+        for i in range(length):
+            image_path = os.path.join(image_dir, image_ids[i])
+            image = Image.open(image_path).resize((128, 128))
+            image = np.array(image, dtype=float)
+            image = image.transpose(2, 0, 1)
+            images.append(image)
+        images = np.array(images, dtype=float)
+
+        return torch.FloatTensor(images), torch.FloatTensor(sentence_embeddings)
+
+
+
+
+
+
+
 
 
 

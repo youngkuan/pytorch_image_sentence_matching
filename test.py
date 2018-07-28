@@ -1,18 +1,19 @@
+from utils import Utils
+import os
 import torch
-from torch.nn.functional import mse_loss,pairwise_distance
-import torch.nn as nn
+from utils import Utils
+from evaluate import evaluate_model,load_discriminator
+import numpy as np
 
 
 def main():
-    # cap = dset.CocoCaptions(root='F:\\COCO\\data\\mscoco2014\\train\\images',
-    #                         annFile='F:/COCO/data/mscoco2014/train/annotations/captions_train2014.json',
-    #                         transform=transforms.ToTensor())
-    bn2D = nn.BatchNorm2d(6)
 
-    x1 = torch.ones(5, 6)
-    x2 = torch.zeros(5, 6)
-    x1 = pairwise_distance(x1,x2)
-    print(x1)
+    # model_path = "./model/flickr8k/"
+    # generator_model_path = os.path.join(model_path, "gen_14.pth")
+    # discriminator_model_path = os.path.join(model_path, "disc_14.pth")
+    # discriminator = load_discriminator(discriminator_model_path)
+    # (r1, r5, r10, medr) = evaluate_model(discriminator)
+    # print "Image to Text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr)
 
 
 if __name__ == '__main__':
