@@ -3,7 +3,13 @@
   <component name="RemoteMappingsManager">
     <list>
       <list>
-        <remote-mappings server-id="python@sftp://yangkuan@202.117.54.73:9221/usr/bin/python" />
+        <remote-mappings server-id="python@sftp://yangkuan@202.117.54.73:9221/usr/bin/python">
+          <settings>
+            <list>
+              <mapping local-root="$PROJECT_DIR$" remote-root="/home/yangkuan/image-caption/pytorch_image_sentence_matching" />
+            </list>
+          </settings>
+        </remote-mappings>
       </list>
     </list>
   </component>

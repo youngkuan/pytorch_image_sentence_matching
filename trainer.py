@@ -124,9 +124,9 @@ class Trainer(object):
                 wrong_images = sample["wrong_image"]
 
                 # get the input tensor
-                sentence_embedding_tensors = torch.tensor(sentence_embeddings, requires_grad=False).cuda()
-                right_image_tensors = torch.tensor(right_images, requires_grad=False).cuda()
-                wrong_image_tensors = torch.tensor(wrong_images, requires_grad=False).cuda()
+                sentence_embedding_tensors = sentence_embeddings.cuda()
+                right_image_tensors = right_images.cuda()
+                wrong_image_tensors = wrong_images.cuda()
                 noises = torch.randn(sentence_embedding_tensors.size(0), self.noise_dim).cuda()
 
                 # optmize  generator
@@ -166,8 +166,8 @@ class Trainer(object):
                 print("Epoch: %d, iteration: %d, generator_loss= %f, discriminator_loss= %f" %
                       (epoch, iteration, generator_loss.data, discriminator_loss.data))
             (r1, r5, r10, medr) = evaluate_model(self.discriminator)
-            print "Epoch: %d, lr:%.1f, lambda1:%.1f, lambda2:%.1f, margin:%.1f ; Image to Text: %.1f, %.1f, %.1f, %.1f" \
-                  % (epoch, self.lr, self.lambda1, self.lambda2, self.margin, r1, r5, r10, medr)
+            print "Epoch: %d, lr:%.4f, margin:%.2f, lambda1:%.2f, lambda2:%.2f ; Image to Text: %.2f, %.2f, %.2f, %.2f" \
+                  % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr)
 
             # Utils.save_checkpoint(self.discriminator, self.generator
             #                       , self.model_save_path, self.dataset_type, postfix)
