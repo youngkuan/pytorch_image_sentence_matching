@@ -39,6 +39,8 @@ class PairwiseRankingLoss(torch.nn.Module):
 
         synthetic_right_distance = Utils.distance(right_image_features, synthetic_image_features)
 
+        print "generator_loss: synthetic_wrong_ranking_scores:%.3f, synthetic_right_distance:%.3f" \
+              % (torch.sum(synthetic_wrong_ranking_scores), torch.sum(synthetic_right_distance))
         generator_loss = torch.sum(synthetic_wrong_ranking_scores+self.lambda2 * synthetic_right_distance)
 
         # loss of discriminator
@@ -53,7 +55,8 @@ class PairwiseRankingLoss(torch.nn.Module):
                                                    , torch.ones(batch_size).cuda()
                                                    * self.margin - right_discriminator_scores
                                                    + synthetic_discriminator_scores)
-
+        print "discriminator_loss: right_wrong_ranking_scores:%.3f, right_synthetic_ranking_scores:%.3f" \
+              % (torch.sum(right_wrong_ranking_scores), torch.sum(right_synthetic_ranking_scores))
         discriminator_loss = torch.sum(right_wrong_ranking_scores + self.lambda1 * right_synthetic_ranking_scores)
 
         return generator_loss, discriminator_loss

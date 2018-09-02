@@ -33,18 +33,17 @@ def evaluate_model(discriminator):
     image_tensors, sentence_embedding_tensors = Utils.load_data(val_image_ids_file, val_sentence_embedding_file,
                                                                 image_dir)
     # image_number * 512, image_number * 512
-    [image_projected_feature, sentence_projected_embed] = discriminator(image_tensors[0:2000]
-                                                                        , sentence_embedding_tensors[0:2000])
+    [image_projected_feature, sentence_projected_embed] = discriminator(image_tensors[0:1000]
+                                                                        , sentence_embedding_tensors[0:1000])
 
     size = image_projected_feature.size()[0]
-    similarities = []
     ranks = np.zeros(size/5)
     for index in range(size/5):
         images = image_projected_feature[index*5].expand(size, 512)
         s = Utils.cosine_similarity(images, sentence_projected_embed)
-        similarities.append(s)
 
         sort_s, indices = torch.sort(s, descending=True)
+        indices = indices.data.squeeze(0).cpu().numpy()
         # Score
         rank = 1e20
         # find the highest ranking
@@ -54,7 +53,6 @@ def evaluate_model(discriminator):
                 rank = tmp
         ranks[index] = rank
     # Compute metrics
-    print(ranks)
     r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
     r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
     r10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
