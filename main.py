@@ -2,7 +2,7 @@
 from trainer import Trainer
 import os
 from utils import Utils
-from evaluate import evaluate_model
+from evaluate import i2t
 import numpy as np
 
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                     trainer = Trainer(sentence_embedding_file, image_ids_file, image_dir
                                       , margin=margin, lr=lr, lambda1=lambda1, lambda2=lambda2)
                     generator, discriminator = trainer.train()
-                    (r1, r5, r10, medr) = evaluate_model(discriminator)
+                    (r1, r5, r10, medr) = i2t(discriminator)
                     print "Image to Text: %.2f, %.2f, %.2f, %.2f" % (r1, r5, r10, medr)
                     if (r1 >= best_r1) and (r5 >= best_r5) and (r10 >= best_r10):
                         best_r1, best_r5,  best_r10, best_medr = r1, r5, r10, medr

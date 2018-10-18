@@ -2,7 +2,7 @@ from utils import Utils
 import os
 import torch
 from utils import Utils
-from evaluate import evaluate_model,load_discriminator
+from evaluate import i2t,load_discriminator
 import numpy as np
 
 
@@ -15,8 +15,9 @@ def main():
     # print "Image to Text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr)
 
     # result = np.load(model_path+'result.npy')
-    print(torch.randn(10, 1))
-
+    # print(torch.randn(10, 1))
+    index = 9
+    print(index/5)
 
 
 if __name__ == '__main__':
