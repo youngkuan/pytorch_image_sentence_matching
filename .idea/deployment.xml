@@ -2,6 +2,13 @@
 <project version="4">
   <component name="PublishConfigData" autoUpload="Always" serverName="yangkuan@202.117.54.73:9221">
     <serverData>
+      <paths name="yangkuan">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/yangkuan/image-caption/pytorch_image_sentence_matching" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="yangkuan@202.117.54.73:9221">
         <serverdata>
           <mappings>

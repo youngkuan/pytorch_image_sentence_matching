@@ -5,9 +5,12 @@ from utils import Utils
 from evaluate import i2t
 import numpy as np
 
-
-if __name__ == '__main__':
-
+def train2select_parameters():
+    '''
+    train the networks
+    use loop to select parameters
+    :return:
+    '''
     data_path = "../data/flickr8k"
     train_data_path = os.path.join(data_path, "train")
     sentence_embedding_file = os.path.join(train_data_path, "train_vectors_.mat")
@@ -88,8 +91,44 @@ if __name__ == '__main__':
     #     print(wrong_image.size())
 
 
+def train(lr, margin, lambda1, lambda2):
+    data_path = "../data/flickr8k"
+    train_data_path = os.path.join(data_path, "train")
+    sentence_embedding_file = os.path.join(train_data_path, "train_vectors_.mat")
+    image_ids_file = os.path.join(train_data_path, "train_image_ids.mat")
+    image_dir = os.path.join(data_path, "images")
+    model_save_path = "./model"
+    dataset_type = "flickr8k"
+    epochs = 64
+
+    print "hyper parameter %.4f, %.2f, %.2f, %.2f" % (lr, margin, lambda1, lambda2)
+    trainer = Trainer(sentence_embedding_file, image_ids_file, image_dir,epochs=epochs
+                      , margin=margin, lr=lr, lambda1=lambda1, lambda2=lambda2)
+    generator, discriminator = trainer.train()
+    (r1, r5, r10, medr) = i2t(discriminator)
+    print "Image to Text: %.2f, %.2f, %.2f, %.2f" % (r1, r5, r10, medr)
+    results = []
+    result = [lr, margin, lambda1, lambda2, r1, r5, r10, medr]
+    results.append(result)
+    # save result
+    np_path = './model/flickr8k/result.npy'
+    txt_path = './model/flickr8k/result.txt'
+
+    if os.path.exists(np_path):
+        os.remove(np_path)
+    if os.path.exists(txt_path):
+        os.remove(txt_path)
+
+    np.save(np_path, results)
+    np.savetxt(txt_path, results)
 
 
+if __name__ == '__main__':
+    lr = 0.001
+    margin = 0.3
+    lambda1 = 3
+    lambda2 = 1.4
+    train(lr, margin, lambda1, lambda2)
 
 
 

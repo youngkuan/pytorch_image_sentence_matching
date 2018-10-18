@@ -5,7 +5,7 @@ from cgan import Generator, Discriminator
 from torch.utils.data import DataLoader
 from loss import PairwiseRankingLoss
 from utils import Utils
-from evaluate import evaluate_model
+from evaluate import i2t
 
 
 class Trainer(object):
@@ -165,12 +165,9 @@ class Trainer(object):
 
                 print("Epoch: %d, iteration: %d, generator_loss= %f, discriminator_loss= %f" %
                       (epoch, iteration, generator_loss.data, discriminator_loss.data))
-            (r1, r5, r10, medr) = evaluate_model(self.discriminator)
+            (r1, r5, r10, medr) = i2t(self.discriminator)
             print "Epoch: %d, lr:%.4f, margin:%.2f, lambda1:%.2f, lambda2:%.2f ; Image to Text: %.2f, %.2f, %.2f, %.2f" \
                   % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr)
-
-            # Utils.save_checkpoint(self.discriminator, self.generator
-            #                       , self.model_save_path, self.dataset_type, postfix)
         return self.generator, self.discriminator
 
 
