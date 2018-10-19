@@ -112,6 +112,7 @@ class Trainer(object):
 
     def train_image_text_gan(self):
         # train the generator and discriminator
+        results = []
         for epoch in range(self.num_epochs):
             iteration = 0
             for sample in self.data_loader:
@@ -166,6 +167,12 @@ class Trainer(object):
                 print("Epoch: %d, iteration: %d, generator_loss= %f, discriminator_loss= %f" %
                       (epoch, iteration, generator_loss.data, discriminator_loss.data))
             (r1, r5, r10, medr) = i2t(self.discriminator)
+            result = [epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr]
+            results.append(result)
+            # save result
+            np_path = './model/flickr8k/result.npy'
+            txt_path = './model/flickr8k/result.txt'
+            Utils.save_results(results,np_path,txt_path)
             print "Epoch: %d, lr:%.4f, margin:%.2f, lambda1:%.2f, lambda2:%.2f ; Image to Text: %.2f, %.2f, %.2f, %.2f" \
                   % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr)
         return self.generator, self.discriminator

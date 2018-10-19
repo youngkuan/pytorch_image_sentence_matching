@@ -102,6 +102,18 @@ class Utils(object):
 
         return torch.FloatTensor(images), torch.FloatTensor(sentence_embeddings)
 
+    @staticmethod
+    def save_results(results,np_path,txt_path):
+        # save results
+
+        if os.path.exists(np_path):
+            os.remove(np_path)
+        if os.path.exists(txt_path):
+            os.remove(txt_path)
+
+        np.save(np_path, results)
+        np.savetxt(txt_path, results)
+
 
 
 

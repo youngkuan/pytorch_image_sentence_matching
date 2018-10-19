@@ -113,14 +113,7 @@ def train(lr, margin, lambda1, lambda2):
     # save result
     np_path = './model/flickr8k/result.npy'
     txt_path = './model/flickr8k/result.txt'
-
-    if os.path.exists(np_path):
-        os.remove(np_path)
-    if os.path.exists(txt_path):
-        os.remove(txt_path)
-
-    np.save(np_path, results)
-    np.savetxt(txt_path, results)
+    # Utils.save_results(results,np_path,txt_path)
 
 
 if __name__ == '__main__':
