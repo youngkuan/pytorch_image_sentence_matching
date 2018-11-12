@@ -46,26 +46,45 @@ class Text2ImageDataset(Dataset):
         # self.find_all_images()
 
         sentence_embedding = self.sentence_embeddings[idx]
-        right_image = self.find_right_image(idx)
-        right_image = np.array(right_image, dtype=float)
-        right_image = right_image.transpose(2, 0, 1)
-        wrong_image = self.find_wrong_image(idx)
-        wrong_image = np.array(wrong_image, dtype=float)
-        wrong_image = wrong_image.transpose(2, 0, 1)
+        right_images = self.find_right_image(idx)
+        wrong_images = self.find_wrong_image(idx)
+        # print "right_images: %d" % len(right_images)
+        # print "wrong_images: %d" % len(wrong_images)
 
-        right_image = self.validate_image(right_image)
-        wrong_image = self.validate_image(wrong_image)
+        right_images_all = []
+        wrong_images_all = []
+        sentence_embeddings_all = []
+        for index in range(len(right_images)):
+            # right_image = np.array(right_images[index], dtype=float)
+            right_image = np.array(right_images[index])
+            # print "right_image.shape:",right_image.shape
+            # print "np.size(right_image):",np.size(right_image)
+            right_image = right_image.transpose(2, 0, 1)
+
+            # wrong_image = np.array(wrong_images[index], dtype=float)
+            wrong_image = np.array(wrong_images[index])
+            # print "wrong_image.shape:",wrong_image.shape
+            # print "np.size(wrong_image):",np.size(wrong_image)
+            wrong_image = wrong_image.transpose(2, 0, 1)
+
+            right_image = self.validate_image(right_image)
+            wrong_image = self.validate_image(wrong_image)
+
+            right_image = torch.FloatTensor(right_image).sub_(127.5).div_(127.5)
+            wrong_image = torch.FloatTensor(wrong_image).sub_(127.5).div_(127.5)
+
+
+            right_images_all.append(right_image)
+            wrong_images_all.append(wrong_image)
+            sentence_embeddings_all.append(torch.FloatTensor(sentence_embedding))
+
 
         sample = {
-            'sentence_embedding': torch.FloatTensor(sentence_embedding),
-            'right_image': torch.FloatTensor(right_image),
+            'sentence_embedding': torch.stack(sentence_embeddings_all,0),
+            'right_image': torch.stack(right_images_all,0),
             # sample a wrong image from images
-            'wrong_image': torch.FloatTensor(wrong_image),
+            'wrong_image': torch.stack(wrong_images_all,0),
         }
-
-        sample['right_image'] = sample['right_image'].sub_(127.5).div_(127.5)
-        sample['wrong_image'] = sample['wrong_image'].sub_(127.5).div_(127.5)
-
         return sample
 
     def find_wrong_image(self, idx):
@@ -80,7 +99,7 @@ class Text2ImageDataset(Dataset):
 
     def find_image(self, image_id):
         if self.dataset_type == 'flickr8k':
-            return self.find_flickr8k_image(image_id)
+            return self.find_crop_flickr8k_image(image_id)
         elif self.dataset_type == 'flickr30k':
             return self.find_all_flickr30k_images(image_id)
         elif self.dataset_type == 'mscoco':
@@ -103,6 +122,28 @@ class Text2ImageDataset(Dataset):
         image_path = os.path.join(self.image_dir, image_id)
         image = Image.open(image_path).resize((128, 128))
         return image
+
+    def find_crop_flickr8k_image(self, image_id):
+        image_path = os.path.join(self.image_dir, image_id)
+        image = Image.open(image_path)
+        # print "image_id",image_id
+        # print image
+        w, h = image.size
+        image_lt = image.crop((0,0,128,128))
+        image_lt2 = image_lt.transpose(Image.FLIP_TOP_BOTTOM)
+        image_rt = image.crop((w-128,0,w,128))
+        image_rt2 = image_rt.transpose(Image.FLIP_TOP_BOTTOM)
+        image_lb = image.crop((0,h-128,128,h))
+        image_lb2 = image_lb.transpose(Image.FLIP_TOP_BOTTOM)
+        image_rb = image.crop((w-128,h-128,w,h))
+        image_rb2 = image_rb.transpose(Image.FLIP_TOP_BOTTOM)
+        image_center = image.crop((w/2-64,h/2-64,w/2+64,h/2+64))
+        image_center2 = image_center.transpose(Image.FLIP_TOP_BOTTOM)
+        images = [image_lt,image_lt2,image_rt,image_rt2
+            ,image_lb,image_lb2,image_rb,image_rb2,image_center,image_center2]
+        return images
+
+
 
     def validate_image(self, img):
         # img = np.array(img, dtype=float)

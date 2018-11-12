@@ -1,6 +1,5 @@
 from cgan import Generator, Discriminator
 import torch
-import os
 from utils import Utils
 import numpy as np
 
@@ -22,20 +21,14 @@ def load_discriminator(discriminator_model_path):
     return discriminator
 
 
-def i2t(discriminator):
+
+
+def i2t(discriminator,image_tensors,sentence_embedding_tensors):
     """
        Images->Text (Image Annotation)
        Images: (5N, K=512) matrix of images
        Captions: (5N, K=512) matrix of captions
     """
-    data_path = "../data/flickr8k"
-    val_data_path = os.path.join(data_path, "val")
-    val_sentence_embedding_file = os.path.join(val_data_path, "val_vectors_.mat")
-    val_image_ids_file = os.path.join(val_data_path, "val_image_ids.mat")
-    image_dir = os.path.join(data_path, "images")
-
-    image_tensors, sentence_embedding_tensors = Utils.load_data(val_image_ids_file, val_sentence_embedding_file,
-                                                                image_dir)
     # image_number * 512, image_number * 512
     [image_projected_feature, sentence_projected_embed] = discriminator(image_tensors[0:1000]
                                                                         , sentence_embedding_tensors[0:1000])
@@ -61,28 +54,24 @@ def i2t(discriminator):
     r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
     r10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
     medr = np.floor(np.median(ranks)) + 1
-    return (r1, r5, r10, medr)
+    return r1, r5, r10, medr
 
 
-def t2i(discriminator):
+def t2i(discriminator,image_tensors,sentence_embedding_tensors):
     """
         Text->Images (Image Search)
         Images: (5N, K=512) matrix of images
         Captions: (5N, K=512) matrix of captions
     """
-    data_path = "../data/flickr8k"
-    val_data_path = os.path.join(data_path, "val")
-    val_sentence_embedding_file = os.path.join(val_data_path, "val_vectors_.mat")
-    val_image_ids_file = os.path.join(val_data_path, "val_image_ids.mat")
-    image_dir = os.path.join(data_path, "images")
 
-    image_tensors, sentence_embedding_tensors = Utils.load_data(val_image_ids_file, val_sentence_embedding_file,
-                                                                image_dir)
     # image_number * 512, image_number * 512
+    # [image_projected_feature, sentence_projected_embed] = discriminator(image_tensors[0:5000]
+    #                                                                     , sentence_embedding_tensors[0:5000])
     [image_projected_feature, sentence_projected_embed] = discriminator(image_tensors[0:1000]
                                                                         , sentence_embedding_tensors[0:1000])
 
     size = image_projected_feature.size()[0]
+    print "size: %d" % size
     ims = torch.cat([image_projected_feature[i].unsqueeze(0) for i in range(0, size, 5)])
 
     ranks = np.zeros(size)
@@ -97,12 +86,12 @@ def t2i(discriminator):
         indices = indices.data.squeeze(0).cpu().numpy()
         ranks[index] = np.where(indices == (index/5))[0][0]
 
-        # Compute metrics
-        r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
-        r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
-        r10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
-        medr = np.floor(np.median(ranks)) + 1
-        return (r1, r5, r10, medr)
+    # Compute metrics
+    r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
+    r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
+    r10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
+    medr = np.floor(np.median(ranks)) + 1
+    return r1, r5, r10, medr
 
 
 

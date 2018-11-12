@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import torch
+import os
 from text_image_dataset import Text2ImageDataset
 from cgan import Generator, Discriminator
 from torch.utils.data import DataLoader
 from loss import PairwiseRankingLoss
 from utils import Utils
-from evaluate import i2t
+from evaluate import i2t,t2i
 
 
 class Trainer(object):
@@ -46,7 +47,7 @@ class Trainer(object):
         # self.discriminator.apply(Utils.weights_init)
         # self.generator.apply(Utils.weights_init)
 
-        # optmizer
+        # define optimizer
         self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=self.lr, betas=(self.beta1, 0.999))
         self.discriminator_optimizer = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr, betas=(self.beta1, 0.999))
 
@@ -114,15 +115,23 @@ class Trainer(object):
         # train the generator and discriminator
         results = []
         for epoch in range(self.num_epochs):
+            # redefine optimizer
+            # self.generator_optimizer = torch.optim.Adam(self.generator.parameters(), lr=self.lr*(0.95**epoch),
+            #                                             betas=(self.beta1, 0.999))
+            # self.discriminator_optimizer = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr,
+            #                                                 betas=(self.beta1, 0.999))
             iteration = 0
             for sample in self.data_loader:
                 iteration += 1
-                # batch_size x sentence_embedding_size
+                # batch_size*10 x sentence_embedding_size
                 sentence_embeddings = sample["sentence_embedding"]
-                # batch_size x num_channels x (image_size x image_size)
+                sentence_embeddings = sentence_embeddings.view(-1, 6000)
+                # batch_size*10 x num_channels x (image_size x image_size)
                 right_images = sample["right_image"]
-                # batch_size x num_channels x (image_size x image_size)
+                right_images = right_images.view(-1, 3, 128, 128)
+                # batch_size*10 x num_channels x (image_size x image_size)
                 wrong_images = sample["wrong_image"]
+                wrong_images = wrong_images.view(-1, 3, 128, 128)
 
                 # get the input tensor
                 sentence_embedding_tensors = sentence_embeddings.cuda()
@@ -130,7 +139,7 @@ class Trainer(object):
                 wrong_image_tensors = wrong_images.cuda()
                 noises = torch.randn(sentence_embedding_tensors.size(0), self.noise_dim).cuda()
 
-                # optmize  generator
+                # optimize  generator
                 self.generator_optimizer.zero_grad()
 
                 synthetic_image_tensors = self.generator(sentence_embedding_tensors, noises)
@@ -166,15 +175,32 @@ class Trainer(object):
 
                 print("Epoch: %d, iteration: %d, generator_loss= %f, discriminator_loss= %f" %
                       (epoch, iteration, generator_loss.data, discriminator_loss.data))
-            (r1, r5, r10, medr) = i2t(self.discriminator)
-            result = [epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr]
+
+
+            # load validate data
+            data_path = "../data/flickr8k"
+            val_data_path = os.path.join(data_path, "val")
+            val_sentence_embedding_file = os.path.join(val_data_path, "val_vectors_.mat")
+            val_image_ids_file = os.path.join(val_data_path, "val_image_ids.mat")
+            image_dir = os.path.join(data_path, "images")
+            image_tensors, sentence_embedding_tensors = Utils.load_data(val_image_ids_file, val_sentence_embedding_file,
+                                                                        image_dir)
+
+            i2t_r1, i2t_r5, i2t_r10, i2t_medr = i2t(self.discriminator,image_tensors, sentence_embedding_tensors)
+            t2i_r1, t2i_r5, t2i_r10, t2i_medr = t2i(self.discriminator,image_tensors, sentence_embedding_tensors)
+            result = [epoch, self.lr, self.margin, self.lambda1, self.lambda2, i2t_r1, i2t_r5, i2t_r10, i2t_medr]
             results.append(result)
             # save result
             np_path = './model/flickr8k/result.npy'
             txt_path = './model/flickr8k/result.txt'
             Utils.save_results(results,np_path,txt_path)
+
+            # print recall
             print "Epoch: %d, lr:%.4f, margin:%.2f, lambda1:%.2f, lambda2:%.2f ; Image to Text: %.2f, %.2f, %.2f, %.2f" \
-                  % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, r1, r5, r10, medr)
+                  % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, i2t_r1, i2t_r5, i2t_r10, i2t_medr)
+            print "Epoch: %d, lr:%.4f, margin:%.2f, lambda1:%.2f, lambda2:%.2f ; Text to Image: %.2f, %.2f, %.2f, %.2f" \
+                  % (epoch, self.lr, self.margin, self.lambda1, self.lambda2, t2i_r1, t2i_r5, t2i_r10, t2i_medr)
+
         return self.generator, self.discriminator
 
 
