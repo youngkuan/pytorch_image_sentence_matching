@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Generator(nn.Module):
 	def __init__(self):
 		super(Generator, self).__init__()
@@ -68,7 +69,6 @@ class Discriminator(nn.Module):
 		self.sentence_embed_dim = 6000
 		self.projected_sentence_embed_dim = 512
 		self.ndf = 64
-
 		self.netD_1 = nn.Sequential(
 			# input is (nc) x 128 x 128
 			nn.Conv2d(self.num_channels, self.ndf, kernel_size=4, stride=2, padding=1, bias=False),

@@ -99,7 +99,7 @@ class Text2ImageDataset(Dataset):
 
     def find_image(self, image_id):
         if self.dataset_type == 'flickr8k':
-            return self.find_crop_flickr8k_image(image_id)
+            return self.find_flickr8k_image(image_id)
         elif self.dataset_type == 'flickr30k':
             return self.find_all_flickr30k_images(image_id)
         elif self.dataset_type == 'mscoco':
@@ -107,21 +107,11 @@ class Text2ImageDataset(Dataset):
         else:
             raise Exception("the dataset %s does no been provided! please make sure arguments", self.dataset_type)
 
-    def find_all_images(self):
-        if self.dataset_type == 'flickr8k':
-            self.find_all_flickr8k_images()
-        elif self.dataset_type == 'flickr30k':
-            self.find_all_flickr30k_images()
-        elif self.dataset_type == 'mscoco':
-            self.find_all_mscoco_images()
-        else:
-            print("the dataset %s does no been provided! please make sure arguments", self.dataset_type)
-            exit()
-
     def find_flickr8k_image(self, image_id):
         image_path = os.path.join(self.image_dir, image_id)
-        image = Image.open(image_path).resize((128, 128))
-        return image
+        image = Image.open(image_path).resize((224, 224))
+        images = [image]
+        return images
 
     def find_crop_flickr8k_image(self, image_id):
         image_path = os.path.join(self.image_dir, image_id)
